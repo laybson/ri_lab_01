@@ -21,11 +21,29 @@ class BrasilElpaisSpider(scrapy.Spider):
         #
         # inclua seu código aqui
         #
-        page = response.url.split("/")[-2]
-        filename = 'quotes-%s.html' % page
-        with open(filename, 'wb') as f:
-            f.write(response.body)
-        self.log('Saved file %s' % filename)
+        # page = response.url.split("/")[-2]
+        # filename = 'quotes-%s.html' % page
+        # with open(filename, 'wb') as f:
+        #     f.write(response.body)
+        # self.log('Saved file %s' % filename)
+        for container in response.css('div.articulo__envoltorio'):
+            yield {
+                # título
+                titulo: container.css('h1.articulo-titulo::text').get(),
+                # subtítulo
+                subtitulo: container.css('h2.articulo-subtitulo::text').get(),
+                # autor
+                autor: container.css('span.autor-nombre::text').get(),
+                # data (dd/mm/yyyy hh:mi:ss)
+                data: container.css('time.articulo-actualizado::datetime').get(),
+                # seção (esportes, economia, etc.)
+                secao: container.css('span.enlace::text').get(),
+                # texto
+                texto: container.css('div.articulo__contenedor::text').get(),
+                # url 
+                url: container.css('meta.url::content').get(),
+            }
+
         #
         #
         #
