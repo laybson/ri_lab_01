@@ -26,24 +26,35 @@ class BrasilElpaisSpider(scrapy.Spider):
         # with open(filename, 'wb') as f:
         #     f.write(response.body)
         # self.log('Saved file %s' % filename)
-        for container in response.css('div.articulo__envoltorio'):
-            yield {
-                # título
-                titulo: container.css('h1.articulo-titulo::text').get(),
-                # subtítulo
-                subtitulo: container.css('h2.articulo-subtitulo::text').get(),
-                # autor
-                autor: container.css('span.autor-nombre::text').get(),
-                # data (dd/mm/yyyy hh:mi:ss)
-                data: container.css('time.articulo-actualizado::datetime').get(),
-                # seção (esportes, economia, etc.)
-                secao: container.css('span.enlace::text').get(),
-                # texto
-                texto: container.css('div.articulo__contenedor::text').get(),
-                # url 
-                url: container.css('meta.url::content').get(),
-            }
+        for art in response.css('div.articulo__interior'):            
+            yield response.follow(art.css('h2')[0].css('a')[0].attrib['href'], callback = self.info)
 
-        #
-        #
-        #
+
+    def info(self, response):
+        texts = response.css('div.articulo__contenedor p::text').getall()
+        text = ''
+        for p in texts:
+            text += p
+
+        yield {
+            # título
+            'titulo': response.css('h1.articulo-titulo::text').get(default='Sem título').strip(),
+            # subtítulo
+            'subtitulo': response.css('h2.articulo-subtitulo::text').get(default='Sem subtítulo').strip(),
+            # autor
+            'autor': response.css('span.autor-nombre a::text').get(default='Sem autor').strip(),
+            # data (dd/mm/yyyy hh:mi:ss)
+            'data': response.css('time::attr(datetime)').get(default='Sem data').strip(),
+            # seção (esportes, economia, etc.)
+            'secao': response.url.split('/')[-2],
+            # texto
+            'texto': text,
+            # url 
+            'url': response.url
+        }
+
+    def get_text(texts):
+        text = ''
+        for p in texts:
+            text += p
+        return text
